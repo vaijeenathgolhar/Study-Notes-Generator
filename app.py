@@ -9,8 +9,9 @@ st.set_page_config(
 import os
 from dotenv import load_dotenv
 from typing import TypedDict
+
 from langchain_groq import ChatGroq
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from langgraph.graph import StateGraph, END
 
 
