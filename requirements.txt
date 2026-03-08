@@ -1,4 +1,9 @@
-langgraph 
-langchain-groq 
-graphviz 
+streamlit
+langchain
+langchain-openai
+langchain-groq
+langgraph
 networkx
+graphviz
+python-dotenv
+tiktoken
