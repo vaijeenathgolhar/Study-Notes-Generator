@@ -6,6 +6,14 @@ This project demonstrates how **AI pipelines can automate learning workflows** f
 
 ---
 
+## 🚀 Live Demo
+
+Try the application here:
+
+🔗 https://study-notes-generator-kwjpmchsgngrhe2ekl93pm.streamlit.app/
+
+---
+
 ## Features
 
 * AI-generated **topic summaries**
