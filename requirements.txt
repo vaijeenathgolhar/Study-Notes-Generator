@@ -1,9 +1,8 @@
 streamlit
+python-dotenv
 langchain
-langchain-openai
+langchain-core
 langchain-groq
 langgraph
-networkx
-graphviz
-python-dotenv
-tiktoken
+pydantic
+typing-extensions
