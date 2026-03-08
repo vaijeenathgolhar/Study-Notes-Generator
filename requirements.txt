@@ -3,5 +3,7 @@ python-dotenv
 langchain-core
 langchain-groq
 langgraph
+graphviz
+fpdf
 pydantic
 typing-extensions

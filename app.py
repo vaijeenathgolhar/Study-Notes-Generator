@@ -14,6 +14,9 @@ from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.graph import StateGraph, END
 
+import graphviz
+from fpdf import FPDF
+
 
 # -----------------------------
 # 1. Load Environment Variables
@@ -55,6 +58,7 @@ class StudyState(TypedDict):
 # 4. Nodes
 # -----------------------------
 def summarize_node(state: StudyState):
+
     prompt = ChatPromptTemplate.from_template(
         """
         Summarize the following topic in simple language for students:
@@ -70,6 +74,7 @@ def summarize_node(state: StudyState):
 
 
 def keypoints_node(state: StudyState):
+
     prompt = ChatPromptTemplate.from_template(
         """
         Convert this summary into clear bullet-point study notes:
@@ -85,6 +90,7 @@ def keypoints_node(state: StudyState):
 
 
 def quiz_node(state: StudyState):
+
     prompt = ChatPromptTemplate.from_template(
         """
         Create 5 quiz questions with answers from these notes:
@@ -104,6 +110,7 @@ def quiz_node(state: StudyState):
 # -----------------------------
 @st.cache_resource
 def build_graph():
+
     builder = StateGraph(StudyState)
 
     builder.add_node("summarizer", summarize_node)
@@ -118,11 +125,31 @@ def build_graph():
 
     return builder.compile()
 
+
 graph = build_graph()
 
 
 # -----------------------------
-# 6. UI
+# 6. PDF Generator
+# -----------------------------
+def create_pdf(summary, keypoints, quiz):
+
+    pdf = FPDF()
+    pdf.add_page()
+
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(200, 10, "AI Study Notes", ln=True)
+
+    pdf.multi_cell(0, 8, "SUMMARY\n" + summary)
+    pdf.multi_cell(0, 8, "\nKEY POINTS\n" + keypoints)
+    pdf.multi_cell(0, 8, "\nQUIZ\n" + quiz)
+
+    pdf.output("study_notes.pdf")
+
+
+# -----------------------------
+# 7. UI
 # -----------------------------
 st.title("Smart Study Notes Generator")
 
@@ -134,16 +161,23 @@ topic = st.text_area(
     height=200
 )
 
+result = None
+
 if st.button("Generate"):
+
     if topic.strip() == "":
         st.warning("Please enter a topic.")
+
     else:
+
         with st.spinner("AI is generating notes..."):
+
             result = graph.invoke({"topic": topic})
 
         col1, col2 = st.columns(2)
 
         with col1:
+
             st.subheader("Summary")
             st.write(result["summary"])
 
@@ -151,7 +185,64 @@ if st.button("Generate"):
             st.write(result["key_points"])
 
         with col2:
-            st.subheader("Quiz")
-            st.write(result["quiz"]) 
 
-            
+            st.subheader("Quiz")
+            st.write(result["quiz"])
+
+        # PDF Download
+        create_pdf(
+            result["summary"],
+            result["key_points"],
+            result["quiz"]
+        )
+
+        with open("study_notes.pdf", "rb") as file:
+
+            st.download_button(
+                label="Download Notes as PDF",
+                data=file,
+                file_name="study_notes.pdf",
+                mime="application/pdf"
+            )
+
+
+# -----------------------------
+# 8. AI Study Assistant
+# -----------------------------
+if result:
+
+    st.subheader("Ask AI about this topic")
+
+    question = st.text_input("Ask a question")
+
+    if question:
+
+        prompt = f"""
+        Topic: {topic}
+
+        Study Notes:
+        {result["key_points"]}
+
+        Answer the student's question clearly.
+
+        Question:
+        {question}
+        """
+
+        response = llm.invoke(prompt)
+
+        st.write(response.content)
+
+
+# -----------------------------
+# 9. LangGraph Workflow
+# -----------------------------
+st.subheader("LangGraph Workflow")
+
+flow = graphviz.Digraph()
+
+flow.edge("User Input", "Summarizer")
+flow.edge("Summarizer", "Key Points")
+flow.edge("Key Points", "Quiz Generator")
+
+st.graphviz_chart(flow)
